@@ -1,0 +1,14 @@
+[package]
+name = "chrono6502"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Headless, cycle-exact MOS 6502/6510 core that boots and measures ChronoForth in-process"
+license = "MIT"
+repository = "https://github.com/chronomancy-io/chrono6502"
+readme = "README.md"
+keywords = ["6502", "6510", "emulator", "c64", "forth"]
+categories = ["emulators", "command-line-utilities"]
+authors = ["Coleman"]
+
+[dependencies]

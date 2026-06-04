@@ -1,0 +1,16 @@
+# Auto line endings
+* text=auto
+
+# Force LF for source / text files
+*.rs text eol=lf
+*.toml text eol=lf
+*.lock text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.vice text eol=lf
+
+# Binary files
+*.prg binary
+*.d64 binary

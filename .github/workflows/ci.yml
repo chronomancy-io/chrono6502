@@ -1,0 +1,53 @@
+---
+name: CI
+
+'on':
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # Core: the cycle-model unit tests. No ChronoForth needed.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build
+        run: cargo build --release --verbose
+      - name: Unit tests (cycle model)
+        run: cargo test --release --verbose
+      - name: Clippy (advisory)
+        run: cargo clippy --release --all-targets || true
+
+  # Integration: boot the real ChronoForth image and run the Forth-2012 gate.
+  # Mirrors `make verify` from the chronoforth repo, now across two checkouts.
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout chrono6502
+        uses: actions/checkout@v4
+        with:
+          path: chrono6502
+      - name: Checkout ChronoForth
+        uses: actions/checkout@v4
+        with:
+          repository: chronomancy-io/chronoforth
+          path: chronoforth
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install ACME assembler
+        run: sudo apt-get update && sudo apt-get install -y acme make
+      - name: Assemble ChronoForth image + symbols
+        working-directory: chronoforth
+        run: make durexforth.prg labels.vice
+      - name: Build chrono6502
+        working-directory: chrono6502
+        run: cargo build --release
+      - name: selftest + Forth-2012 gate
+        working-directory: chrono6502
+        run: |
+          BIN=./target/release/chrono6502
+          CF=../chronoforth
+          "$BIN" --prg "$CF/durexforth.prg" --labels "$CF/labels.vice" --repo "$CF" selftest
+          CHRONO_MAXCYC=400000000 "$BIN" --prg "$CF/durexforth.prg" --labels "$CF/labels.vice" --repo "$CF" gate
