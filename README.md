@@ -5,7 +5,8 @@ to measure and verify [ChronoForth](https://github.com/chronomancy-io/chronofort
 It boots the **real** ChronoForth kernel in-process — no VIC-II/SID/disk, just the
 CPU plus minimal KERNAL/IEC stubs that serve Forth source from a ChronoForth
 checkout's `forth/` and `test/` — so the whole Forth-2012 test suite runs in
-~0.4 s and any word's exact cycle cost is one command away.
+under half a second (~0.45 s warm) and any word's exact cycle cost is one
+command away.
 
 It was extracted from `chronoforth/tools/chrono6502` into its own repository so it
 can stand on its own; it has no build-time dependency on ChronoForth, only a
@@ -70,8 +71,10 @@ the boot reaches the interactive prompt.
 1. Exact agreement with hand-derived cycle counts on 22 straight-line primitives.
 2. `cargo test`: page-cross penalties, branch timing, ADC/SBC flags, ZP-X wrap, JSR/RTS.
 3. The full Forth-2012 suite passes in-emulator (`gate`).
-4. VICE cross-check via a CIA-timer benchmark — the emulator reproduces VICE's
-   counts including placement-dependent branch page-cross.
+4. VICE cross-check — during ChronoForth development this core was checked against
+   a CIA-timer benchmark run in real VICE and reproduced VICE's counts, including a
+   placement-dependent branch page-cross. (That cross-check harness lives in the
+   ChronoForth repo, not here.)
 
 CI runs the unit tests on every push, plus a `gate` job that checks out
 ChronoForth, assembles the image, and runs `selftest` + the Forth-2012 gate.
