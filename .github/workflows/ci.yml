@@ -40,7 +40,11 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y acme make
       - name: Assemble ChronoForth image + symbols
         working-directory: chronoforth
-        run: make durexforth.prg labels.vice
+        # ChronoForth's Makefile has no labels.vice target; re-run the same
+        # ACME assembly with a VICE label dump added.
+        run: |
+          make durexforth.prg
+          acme -I asm --vicelabels labels.vice asm/durexforth.asm
       - name: Build chrono6502
         working-directory: chrono6502
         run: cargo build --release
