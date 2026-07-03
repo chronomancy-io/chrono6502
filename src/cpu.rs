@@ -4,8 +4,9 @@
 //! page-cross on indexed *reads* (`abs,X` / `abs,Y` / `(zp),Y`), +1 for a taken
 //! branch and +1 more if it crosses a page. Stores and read-modify-write take
 //! their fixed counts. Zero-page,X/Y wrap within the zero page and never cross.
-//! Decimal mode is implemented for completeness (ChronoForth math does not use
-//! it, but BCD correctness is cheap insurance).
+//! Decimal mode is present but ADC's BCD adjust deviates from NMOS hardware
+//! (e.g. $09 + $01 with D set); ChronoForth math never sets D, so do not use
+//! this core to verify BCD arithmetic.
 
 pub const C: u8 = 0x01;
 pub const Z: u8 = 0x02;

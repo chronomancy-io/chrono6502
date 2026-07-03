@@ -12,6 +12,22 @@ It was extracted from `chronoforth/tools/chrono6502` into its own repository so 
 can stand on its own; it has no build-time dependency on ChronoForth, only a
 run-time one (you point it at an assembled image and a source tree).
 
+## Scope
+
+The cycle numbers are trustworthy for self-contained code, within these limits:
+
+- **Documented opcodes only.** Undocumented/illegal opcodes are not emulated;
+  executing one is a hard error. There is no IRQ/NMI — nothing ever interrupts
+  straight-line code.
+- **Decimal-mode ADC deviates from hardware.** ChronoForth math never sets the
+  D flag; do not use this core to verify BCD arithmetic.
+- **The 6510's `$00`/`$01` I/O port and ROM banking are not modeled.** Those
+  addresses are plain RAM and no ROM is mapped; KERNAL calls are trapped and
+  serviced in Rust instead.
+- **KERNAL I/O is charged a nominal flat cost** (20 cycles per trapped call),
+  so I/O-bound words are *not* exactly timed; self-contained stack/math words
+  are.
+
 ## Build
 
 ```bash
@@ -27,8 +43,12 @@ ChronoForth checkout:
 ```bash
 git clone https://github.com/chronomancy-io/chronoforth
 cd chronoforth
-make durexforth.prg labels.vice      # needs the `acme` assembler
+make durexforth.prg                                      # needs the `acme` assembler
+acme -I asm --vicelabels labels.vice asm/durexforth.asm  # same assembly, plus symbols
 ```
+
+(ChronoForth's Makefile has no `labels.vice` target; the second command re-runs
+the same ACME assembly with a VICE label dump added.)
 
 ## Usage
 
@@ -45,7 +65,7 @@ chrono6502 --prg   /path/to/chronoforth/durexforth.prg \
 
 | Command | What it does |
 |---------|--------------|
-| `selftest` | Measure 22 primitives, assert cycle counts + stack effects (exit 1 on mismatch) |
+| `selftest` | Measure 22 primitives; assert stack effects for all 22, exact cycles for 7 (exit 1 on mismatch) |
 | `ledger`   | Print cycles for the curated primitive set |
 | `word NAME [in…]` | JSR one word by symbol, print cycles + resulting stack |
 | `boot "<forth>" [more…]` | Boot the full system, run Forth one-liners, print output |
@@ -68,13 +88,15 @@ the boot reaches the interactive prompt.
 
 ## Validation
 
-1. Exact agreement with hand-derived cycle counts on 22 straight-line primitives.
+1. `selftest`: stack effects asserted on all 22 straight-line primitives; exact
+   agreement with hand-derived cycle counts asserted on 7 of them (drop 14,
+   dup 24, swap 38, over 24, 1+ 15, + 34, - 34).
 2. `cargo test`: page-cross penalties, branch timing, ADC/SBC flags, ZP-X wrap, JSR/RTS.
 3. The full Forth-2012 suite passes in-emulator (`gate`).
-4. VICE cross-check — during ChronoForth development this core was checked against
-   a CIA-timer benchmark run in real VICE and reproduced VICE's counts, including a
-   placement-dependent branch page-cross. (That cross-check harness lives in the
-   ChronoForth repo, not here.)
+4. VICE cross-check (external, via the ChronoForth project — the harness is not
+   shipped in this repo): during ChronoForth development this core was checked
+   against a CIA-timer benchmark run in real VICE and reproduced VICE's counts,
+   including a placement-dependent branch page-cross.
 
 CI runs the unit tests on every push, plus a `gate` job that checks out
 ChronoForth, assembles the image, and runs `selftest` + the Forth-2012 gate.
